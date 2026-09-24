@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { AuthGuard } from './auth/auth.guard.js';
 import { UsersModule } from './users/users.module.js';
 import { BigTasksModule } from './big-tasks/big-tasks.module.js';
 import { SubTasksModule } from './sub-tasks/sub-tasks.module.js';
@@ -32,6 +34,12 @@ import { HomeModule } from './home/home.module.js';
     HomeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {}
