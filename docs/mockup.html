@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>先延ばし解決アプリ モックアップ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root {
+    --surface-1: #f1efe8;
+    --surface-2: #ffffff;
+    --border: #d3d1c7;
+    --border-strong: #b4b2a9;
+    --border-accent: #378add;
+    --border-success: #97c459;
+    --bg-accent: #e6f1fb;
+    --bg-success: #eaf3de;
+    --text-primary: #2c2c2a;
+    --text-secondary: #5f5e5a;
+    --text-accent: #0c447c;
+    --text-success: #27500a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #fafaf8;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 24px; }
+  .phone {
+    width: 300px;
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: 28px;
+    padding: 16px;
+  }
+  .screen-frame {
+    background: var(--surface-2);
+    border-radius: 16px;
+    min-height: 480px;
+    padding: 20px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  input, button {
+    height: 36px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border-strong);
+    background: #fff;
+    font-size: 13px;
+    padding: 0 10px;
+    font-family: inherit;
+  }
+  button { cursor: pointer; }
+  button:hover { background: var(--surface-1); }
+  .link { color: var(--text-accent); font-size: 12px; cursor: pointer; text-align: center; display: block; margin-top: 12px; }
+  .back { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+  .field label { font-size: 11px; color: var(--text-secondary); }
+  .field input { width: 100%; margin-top: 4px; }
+
+  /* モーダル（小タスク一覧の上に重ねて表示） */
+  #modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(44,44,42,0.35);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    border-radius: 16px;
+  }
+  #modal-backdrop.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface-2);
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+    max-height: 92%;
+    overflow-y: auto;
+  }
+  .modal-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--border-strong);
+    margin: 0 auto 12px;
+  }
+  .nav { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+  .nav button { width: 36px; height: 36px; padding: 0; }
+  #dots { font-size: 13px; color: var(--text-secondary); min-width: 175px; text-align: center; }
+
+  /* 画面下部固定のタブバー（ホーム／大タスク一覧） */
+  .screen-frame { display: flex; flex-direction: column; }
+  .screen-body { flex: 1; overflow-y: auto; }
+  #bottom-nav {
+    display: none;
+    border-top: 0.5px solid var(--border);
+    margin: 12px -16px -20px;
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface-2);
+  }
+  #bottom-nav.visible { display: flex; }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+  .bottom-nav-item.active { color: var(--text-accent); }
+  .bottom-nav-item i { font-size: 20px; }
+</style>
+</head>
+<body>
+<h1>先延ばし解決アプリ モックアップ</h1>
+<div class="phone">
+  <div class="screen-frame">
+  <div class="screen-body">
+
+    <!-- 0: ログイン -->
+    <div class="screen" data-i="0">
+      <p style="font-weight:500;font-size:16px;margin:0 0 20px">ログイン</p>
+      <input placeholder="name@example.com" style="width:100%;margin-bottom:10px">
+      <input type="password" placeholder="パスワード" style="width:100%;margin-bottom:16px">
+      <button style="width:100%" onclick="go(4)">ログイン</button>
+      <span class="link" onclick="go(1)">新規登録はこちら</span>
+    </div>
+
+    <!-- 1: 新規アカウント作成 -->
+    <div class="screen" data-i="1" style="display:none">
+      <p style="font-weight:500;font-size:16px;margin:0 0 20px">新規アカウント作成</p>
+      <input placeholder="お名前" style="width:100%;margin-bottom:10px">
+      <input placeholder="name@example.com" style="width:100%;margin-bottom:10px">
+      <input type="password" placeholder="パスワード" style="width:100%;margin-bottom:16px">
+      <button style="width:100%" onclick="go(4)">アカウントを作成</button>
+      <span class="link" onclick="go(0)">ログインはこちら</span>
+    </div>
+
+    <!-- 2: 大タスク一覧 -->
+    <div class="screen" data-i="2" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="display:flex;gap:8px;flex:1">
+          <button id="tab-today" onclick="setTab('today')" style="flex:1">今日</button>
+          <button id="tab-tomorrow" onclick="setTab('tomorrow')" style="flex:1">明日</button>
+        </div>
+        <span onclick="go(0)" style="cursor:pointer;padding:0 4px" aria-label="ログアウト"><i class="ti ti-logout" style="font-size:18px;color:var(--text-secondary)"></i></span>
+      </div>
+      <div id="tab-content"></div>
+      <button style="width:100%;margin-top:14px" onclick="go(8)"><i class="ti ti-plus" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>新しいタスク</button>
+    </div>
+
+    <!-- 3: 小タスク一覧（モーダルの土台にもなる） -->
+    <div class="screen" data-i="3" style="display:none">
+      <span class="back" onclick="go(2)"><i class="ti ti-arrow-left" style="font-size:14px"></i>大タスク一覧へ戻る</span>
+      <p style="font-weight:500;font-size:16px;margin:0 0 4px">卒業論文を書く</p>
+      <p style="font-size:12px;color:var(--text-secondary);margin:0 0 14px">小タスクへ分割・順番を編集</p>
+      <div id="subtask-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button style="width:100%;margin-top:12px" onclick="go(5)"><i class="ti ti-plus" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>小タスクを追加</button>
+    </div>
+
+    <!-- 4: ホーム -->
+    <div class="screen" data-i="4" style="display:none">
+      <p style="font-weight:500;font-size:16px;margin:0 0 16px">ホーム</p>
+      <div onclick="openDetail(0)" style="cursor:pointer;border:2px solid var(--border-accent);border-radius:8px;padding:12px;margin-bottom:10px">
+        <p style="font-size:11px;color:var(--text-accent);margin:0 0 4px">今</p>
+        <p style="font-size:14px;font-weight:500;margin:0 0 4px">先行研究を3本読む</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:0">締切: 18:00 ・ 30秒: 論文を1本開く</p>
+      </div>
+      <div onclick="openDetail(1)" style="cursor:pointer;border:0.5px solid var(--border);border-radius:8px;padding:12px;opacity:0.6">
+        <p style="font-size:11px;color:var(--text-secondary);margin:0 0 4px">次</p>
+        <p style="font-size:14px;margin:0">構成メモを作る</p>
+      </div>
+    </div>
+
+    <!-- 7: 完了記録（配列末尾に配置） -->
+    <div class="screen" data-i="7" style="display:none">
+      <p style="font-weight:500;font-size:16px;margin:0 0 16px">ホーム</p>
+      <div onclick="openDetail(0)" style="cursor:pointer;border:0.5px solid var(--border-success);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--bg-success)">
+        <p style="font-size:11px;color:var(--text-success);margin:0 0 4px"><i class="ti ti-check" style="font-size:14px;vertical-align:-2px"></i>完了</p>
+        <p style="font-size:14px;font-weight:500;margin:0;color:var(--text-success);text-decoration:line-through">先行研究を3本読む</p>
+      </div>
+      <div onclick="openDetail(1)" style="cursor:pointer;border:2px solid var(--border-accent);border-radius:8px;padding:12px">
+        <p style="font-size:11px;color:var(--text-accent);margin:0 0 4px">今</p>
+        <p style="font-size:14px;font-weight:500;margin:0 0 4px">構成メモを作る</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:0">締切: 20:00 ・ 30秒: 見出しを1つ書く</p>
+      </div>
+    </div>
+
+  </div>
+  <div id="bottom-nav">
+    <span class="bottom-nav-item" id="nav-home" onclick="go(4)"><i class="ti ti-home"></i>ホーム</span>
+    <span class="bottom-nav-item" id="nav-big-tasks" onclick="go(2)"><i class="ti ti-list-check"></i>大タスク一覧</span>
+  </div>
+
+    <!-- モーダル：小タスク詳細 / 小タスク作成 / 大タスク作成 -->
+    <div id="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <p id="modal-title" style="font-weight:500;font-size:15px;margin:0 0 14px"></p>
+        <div id="modal-fields" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="modal-actions" style="display:flex;gap:8px;margin-top:16px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="nav">
+  <button onclick="nav(-1)" aria-label="前の画面"><i class="ti ti-arrow-left" style="font-size:16px"></i></button>
+  <span id="dots"></span>
+  <button onclick="nav(1)" aria-label="次の画面"><i class="ti ti-arrow-right" style="font-size:16px"></i></button>
+</div>
+
+<script>
+// 0..8 の並びで画面をたどる。5・6は小タスク一覧、8は大タスク一覧の上にモーダルを重ねた状態。
+const names = [
+  'ログイン',
+  '新規アカウント作成',
+  '大タスク一覧',
+  '小タスク一覧',
+  'ホーム',
+  '小タスク作成',
+  '小タスク詳細',
+  '完了記録',
+  '大タスク作成'
+];
+// モーダル状態のとき、下に表示する画面
+const baseScreen = { 5: 3, 6: 3, 8: 2 };
+// 下部タブバーを表示する画面（ログイン・新規登録では非表示）
+const screensWithBottomNav = [2, 3, 4, 7];
+// 「ホーム」タブを強調する画面
+const homeTabScreens = [4, 7];
+
+let cur = 0;
+let tab = 'today';
+let openIdx = null;
+let detailIdx = 0;
+
+const tasks = {
+  today: [
+    { n:'卒業論文を書く', active:true,  sub:['先行研究を3本読む','構成メモを作る'] },
+    { n:'部屋の片付け',   active:false, sub:['机の上を片付ける'] }
+  ],
+  tomorrow: [
+    { n:'卒業論文を書く', sub:['第1章を書く'] }
+  ]
+};
+
+let subtasks = [
+  { n:'先行研究を3本読む', deadline:'18:00', starter:'論文を1本開く',     est:60, act:55 },
+  { n:'構成メモを作る',     deadline:'20:00', starter:'見出しを1つ書く',   est:30, act:null },
+  { n:'第1章を書く',        deadline:'',      starter:'',                  est:90, act:null }
+];
+
+function go(i){ cur = i; render(); }
+function nav(d){ cur = (cur + d + names.length) % names.length; render(); }
+
+function setTab(t){ tab = t; openIdx = null; renderTab(); }
+function toggle(i){ openIdx = (openIdx === i) ? null : i; renderTab(); }
+
+function renderTab(){
+  document.getElementById('tab-today').style.borderColor    = tab === 'today'    ? 'var(--border-accent)' : 'var(--border-strong)';
+  document.getElementById('tab-tomorrow').style.borderColor = tab === 'tomorrow' ? 'var(--border-accent)' : 'var(--border-strong)';
+
+  const isToday = tab === 'today';
+  const list = tasks[tab];
+  let html = '<div style="display:flex;flex-direction:column;gap:8px">';
+
+  list.forEach((t, i) => {
+    const open = openIdx === i;
+    // 着手中の枠線強調は「今日」タブのみ
+    const active = isToday && t.active;
+    html += '<div style="border:' + (active ? '2px solid var(--border-accent)' : '0.5px solid var(--border)') + ';border-radius:8px;padding:10px 12px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">';
+    html += '<span onclick="go(3)" style="font-size:14px;cursor:pointer;flex:1">' + t.n
+          + (active ? ' <span style="font-size:10px;color:var(--text-accent)">・着手中</span>' : '') + '</span>';
+    // 「着手する」ボタンは今日タブのみ表示
+    if (isToday && !t.active) {
+      html += '<button onclick="activate(' + i + ')" style="height:26px;padding:0 8px;font-size:11px">着手する</button>';
+    }
+    html += '<span onclick="removeBigTask(\'' + tab + '\',' + i + ')" style="cursor:pointer;padding:2px" aria-label="削除"><i class="ti ti-trash" style="font-size:15px;color:var(--text-secondary)"></i></span>';
+    html += '<span onclick="toggle(' + i + ')" style="cursor:pointer;padding:2px 4px"><i class="ti ti-chevron-' + (open ? 'up' : 'down') + '" style="font-size:16px"></i></span>';
+    html += '</div>';
+    if (open) {
+      html += '<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:flex;flex-direction:column;gap:4px">';
+      t.sub.forEach((s, si) => {
+        html += '<p style="font-size:12px;color:var(--text-secondary);margin:0">' + (si + 1) + '. ' + s + '</p>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+
+  html += '</div>';
+  document.getElementById('tab-content').innerHTML = html;
+}
+
+function activate(i){
+  tasks.today.forEach(x => x.active = false);
+  tasks.today[i].active = true;
+  renderTab();
+}
+
+function removeBigTask(t, i){
+  tasks[t].splice(i, 1);
+  openIdx = null;
+  renderTab();
+}
+
+function renderSubtasks(){
+  let html = '';
+  subtasks.forEach((s, i) => {
+    html += '<div style="display:flex;align-items:center;gap:8px;border:0.5px solid var(--border);border-radius:8px;padding:8px 10px">';
+    html += '<span style="width:20px;height:20px;border-radius:50%;background:var(--bg-accent);color:var(--text-accent);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i + 1) + '</span>';
+    html += '<span onclick="openDetail(' + i + ')" style="flex:1;cursor:pointer">';
+    html += '<span style="font-size:13px;display:block">' + s.n + '</span>';
+    html += '<span style="font-size:11px;color:var(--text-secondary)">'
+          + (s.deadline ? s.deadline + 'まで ・ ' : '')
+          + '見積もり: ' + (s.est ? s.est + '分' : '未設定') + '</span>';
+    html += '</span>';
+    html += '<span onclick="move(' + i + ',-1)" style="cursor:pointer;padding:2px"><i class="ti ti-chevron-up" style="font-size:16px;' + (i === 0 ? 'opacity:0.25' : '') + '"></i></span>';
+    html += '<span onclick="move(' + i + ',1)" style="cursor:pointer;padding:2px"><i class="ti ti-chevron-down" style="font-size:16px;' + (i === subtasks.length - 1 ? 'opacity:0.25' : '') + '"></i></span>';
+    html += '</div>';
+  });
+  document.getElementById('subtask-list').innerHTML = html;
+}
+
+function move(i, d){
+  const j = i + d;
+  if (j < 0 || j >= subtasks.length) return;
+  [subtasks[i], subtasks[j]] = [subtasks[j], subtasks[i]];
+  renderSubtasks();
+}
+
+function openDetail(i){
+  detailIdx = i;
+  go(6);
+}
+
+function field(label, value, placeholder){
+  return '<div class="field"><label>' + label + '</label>'
+       + '<input value="' + (value || '') + '" placeholder="' + (placeholder || '') + '"></div>';
+}
+
+function renderModal(){
+  const backdrop = document.getElementById('modal-backdrop');
+  const title    = document.getElementById('modal-title');
+  const fields   = document.getElementById('modal-fields');
+  const actions  = document.getElementById('modal-actions');
+
+  if (cur !== 5 && cur !== 6 && cur !== 8) {
+    backdrop.classList.remove('open');
+    return;
+  }
+  backdrop.classList.add('open');
+
+  if (cur === 8) {
+    // 大タスク作成（日付は今開いているタブに従い自動設定するため入力項目に含めない）
+    title.textContent = '大タスクを追加（' + (tab === 'today' ? '今日' : '明日') + '）';
+    fields.innerHTML = field('タスク名', '', '例: 卒業論文を書く');
+    actions.innerHTML =
+        '<button style="flex:1" onclick="go(2)">追加する</button>'
+      + '<button style="flex:1" onclick="go(2)">キャンセル</button>';
+    return;
+  }
+
+  if (cur === 5) {
+    // 小タスク作成
+    title.textContent = '小タスクを追加';
+    fields.innerHTML =
+        field('タスク名', '', '例: 先行研究を3本読む')
+      + field('期限時刻', '', '例: 18:00')
+      + field('30秒スタータータスク', '', '例: 論文を1本開く')
+      + field('見積もり時間（分）', '', '例: 60');
+    actions.innerHTML =
+        '<button style="flex:1" onclick="go(3)">追加する</button>'
+      + '<button style="flex:1" onclick="go(3)">キャンセル</button>';
+  } else {
+    // 小タスク詳細
+    if (detailIdx == null || detailIdx >= subtasks.length) detailIdx = 0;
+    const s = subtasks[detailIdx];
+    title.textContent = '小タスクの詳細';
+    fields.innerHTML =
+        field('タスク名', s.n, '')
+      + field('期限時刻', s.deadline, '例: 18:00')
+      + field('30秒スタータータスク', s.starter, '未設定')
+      + field('見積もり時間（分）', s.est, '未設定')
+      + field('実績時間（分）', s.act, '未記録');
+    actions.innerHTML =
+        '<button style="flex:1" onclick="go(3)">保存</button>'
+      + '<span onclick="removeSubTaskFromDetail()" style="cursor:pointer;padding:0 8px;display:flex;align-items:center" aria-label="削除"><i class="ti ti-trash" style="font-size:17px;color:var(--text-secondary)"></i></span>';
+  }
+}
+
+function removeSubTaskFromDetail(){
+  subtasks.splice(detailIdx, 1);
+  if (detailIdx >= subtasks.length) detailIdx = Math.max(0, subtasks.length - 1);
+  go(3);
+}
+
+function render(){
+  // モーダル状態のときは、下に小タスク一覧を表示したままにする
+  const visible = (cur in baseScreen) ? baseScreen[cur] : cur;
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = (+s.dataset.i === visible) ? 'block' : 'none';
+  });
+
+  document.getElementById('dots').textContent = (cur + 1) + ' / ' + names.length + ' ' + names[cur];
+
+  const bottomNav = document.getElementById('bottom-nav');
+  bottomNav.classList.toggle('visible', screensWithBottomNav.includes(visible));
+  const onHome = homeTabScreens.includes(visible);
+  document.getElementById('nav-home').classList.toggle('active', onHome);
+  document.getElementById('nav-big-tasks').classList.toggle('active', !onHome);
+
+  if (visible === 2) renderTab();
+  if (visible === 3) renderSubtasks();
+  renderModal();
+}
+
+render();
+</script>
+</body>
+</html>
